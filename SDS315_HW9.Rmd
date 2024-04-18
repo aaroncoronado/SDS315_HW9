@@ -5,9 +5,9 @@ date: "2024-04-18"
 output: html_document
 ---
 
-# **Homework 10**
+# **Homework 9**
 
-[Github Repo Link]()
+[Github Repo Link](https://github.com/aaroncoronado/SDS315_HW9.git)
 
 ```{r Setup, message = FALSE, warning = FALSE, echo = FALSE}
 library(tidyverse)
@@ -35,12 +35,12 @@ ub = confint(bs_called, level = 0.95)$upper
 ```
 * The proportion of those receiving a GOTV call who voted in 1998 is `r round(prop1, 2)`.\
 * The sample proportion of those not receiving a GOTV call who voted in 1998 is `r round(prop2, 2)`.\
-* The large-sample 95% confidence interval for the difference in the proportions of voting in 1998 for those who received a GOTV call verus those who did not is (`r round(lb, 2)`, `r round(ub, 2)`).
+* The large-sample 95% confidence interval for the difference in the proportions of voting in 1998 for those who received a GOTV call versus those who did not is (`r round(lb, 2)`, `r round(ub, 2)`).
 
 ### **Part B**
 
 ```{r Part 1.B, message = FALSE, warning = FALSE, echo = FALSE}
-# confunding variables and GOTV_call
+# confounding variables and GOTV_call
 call_96 <- tibble("Received a GOTV Call" = c("No", "Yes"),
                   "Proportion that Voted in 1996" = round(prop.table(table(filter(turnout, GOTV_call == 1)$voted1996)), 3))
 kable_styling(kbl(call_96))
@@ -52,7 +52,7 @@ ggplot(turnout, aes(x = AGE)) +
   geom_boxplot() +
   labs(title = "Age Distribution of GOTV Call Receivers (1) and Non-Receivers (0)", x = "Age")
 
-# confunding variables and voted1998
+# confounding variables and voted1998
 voted98_96 <- tibble("Voted in 1998" = c("No", "Yes"),
                   "Proportion that Voted in 1996" = round(prop.table(table(filter(turnout, voted1998 == 1)$voted1996)), 3))
 kable_styling(kbl(voted98_96))
@@ -64,6 +64,7 @@ ggplot(turnout, aes(x = AGE)) +
   labs(title = "Age Distribution of GOTV Call Receivers (1) and Non-Receivers (0)", x = "Age") +
   facet_wrap(~voted1998)
 ```
+
 For the receivers of a GOTV call, the proportion of those that voted in the 1996 election is higher than those that did not receive a GOTV call. For those that voted in 1998 election, the proportion of those that voted in the 1996 election is higher than those that did not voted in 1998 election. For the receivers of a GOTV call, the proportion of those registered with a major political party is higher than those that did not receive a GOTV call. For those that voted in 1998 election, the proportion of those registered with a major political party is higher than those that did not voted in 1998 election. The mean age of those that received a GOTV call is higher than those that did not, and the same goes for the mean age of those that voted in the 1998 election and those that did not.
 
 ### **Part C**
@@ -110,6 +111,8 @@ ggplot(manufact, aes(x = Solder, y = skips)) +
 ```
 
 The graph above illustrates that the thicker the alloyed used for soldering is, the lesser the average number of skips is.
+
+### **Part B**
 
 ```{r Part 2.B, message = FALSE, warning = FALSE, echo = FALSE}
 lm_opn_sldr = lm(skips ~ Opening + Solder + Opening:Solder, data = manufact)
