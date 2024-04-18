@@ -1,0 +1,137 @@
+---
+title: "SDS315_HW9"
+author: "Aaron Coronado"
+date: "2024-04-18"
+output: html_document
+---
+
+# **Homework 10**
+
+[Github Repo Link]()
+
+```{r Setup, message = FALSE, warning = FALSE, echo = FALSE}
+library(tidyverse)
+library(mosaic)
+library(ggplot2)
+library(MatchIt)
+library(kableExtra)
+library(moderndive)
+turnout <- read_csv("turnout.csv")
+manufact <- read_csv("solder.csv")
+```
+
+## **Problem 1: Get out the vote**
+
+### **Part A**
+
+```{r Part 1.A, message = FALSE, warning = FALSE, echo = FALSE}
+prop1 = sum(turnout$GOTV_call & turnout$voted1998) / sum(turnout$GOTV_call)
+
+prop2 = sum(turnout$GOTV_call == 0 & turnout$voted1998) / sum(turnout$GOTV_call == 0)
+
+bs_called = do(1000) * diffprop(voted1998 ~ GOTV_call, data = resample(turnout))
+lb = confint(bs_called, level = 0.95)$lower
+ub = confint(bs_called, level = 0.95)$upper
+```
+* The proportion of those receiving a GOTV call who voted in 1998 is `r round(prop1, 2)`.\
+* The sample proportion of those not receiving a GOTV call who voted in 1998 is `r round(prop2, 2)`.\
+* The large-sample 95% confidence interval for the difference in the proportions of voting in 1998 for those who received a GOTV call verus those who did not is (`r round(lb, 2)`, `r round(ub, 2)`).
+
+### **Part B**
+
+```{r Part 1.B, message = FALSE, warning = FALSE, echo = FALSE}
+# confunding variables and GOTV_call
+call_96 <- tibble("Received a GOTV Call" = c("No", "Yes"),
+                  "Proportion that Voted in 1996" = round(prop.table(table(filter(turnout, GOTV_call == 1)$voted1996)), 3))
+kable_styling(kbl(call_96))
+call_prty <- tibble("Received a GOTV Call" = c("No", "Yes"),
+                  "Proportion Registered with a Major Party" = round(prop.table(table(filter(turnout, GOTV_call == 1)$MAJORPTY)), 3))
+kable_styling(kbl(call_prty))
+labels = c("No", "Yes")
+ggplot(turnout, aes(x = AGE)) +
+  geom_boxplot() +
+  labs(title = "Age Distribution of GOTV Call Receivers (1) and Non-Receivers (0)", x = "Age")
+
+# confunding variables and voted1998
+voted98_96 <- tibble("Voted in 1998" = c("No", "Yes"),
+                  "Proportion that Voted in 1996" = round(prop.table(table(filter(turnout, voted1998 == 1)$voted1996)), 3))
+kable_styling(kbl(voted98_96))
+voted98_prty <- tibble("Voted in 1998" = c("No", "Yes"),
+                  "Proportion Registered with a Major Party" = round(prop.table(table(filter(turnout, voted1998 == 1)$MAJORPTY)), 3))
+kable_styling(kbl(voted98_prty))
+ggplot(turnout, aes(x = AGE)) +
+  geom_boxplot() +
+  labs(title = "Age Distribution of GOTV Call Receivers (1) and Non-Receivers (0)", x = "Age") +
+  facet_wrap(~voted1998)
+```
+For the receivers of a GOTV call, the proportion of those that voted in the 1996 election is higher than those that did not receive a GOTV call. For those that voted in 1998 election, the proportion of those that voted in the 1996 election is higher than those that did not voted in 1998 election. For the receivers of a GOTV call, the proportion of those registered with a major political party is higher than those that did not receive a GOTV call. For those that voted in 1998 election, the proportion of those registered with a major political party is higher than those that did not voted in 1998 election. The mean age of those that received a GOTV call is higher than those that did not, and the same goes for the mean age of those that voted in the 1998 election and those that did not.
+
+### **Part C**
+
+```{r Part 1.C, message = FALSE, warning = FALSE, echo = FALSE}
+calls_matched = matchit(GOTV_call ~ voted1996 + AGE + MAJORPTY, data = turnout, ratio = 5) %>%
+  match.data
+diffavg1 = diffmean(AGE ~ GOTV_call, data = turnout)
+diffavg2 = diffmean(AGE ~ GOTV_call, data = calls_matched)
+
+new_prop1 = sum(calls_matched$GOTV_call & calls_matched$voted1998) / sum(calls_matched$GOTV_call)
+new_prop2 = sum(calls_matched$GOTV_call == 0 & calls_matched$voted1998) / sum(calls_matched$GOTV_call == 0)
+bs_matched = do(1000) * diffprop(voted1998 ~ GOTV_call, data = resample(calls_matched))
+new_lb = confint(bs_matched, level = 0.95)$lower
+new_ub = confint(bs_matched, level = 0.95)$upper
+```
+
+The difference in mean age of those that received a GOTV call and those that did not is `r round(diffavg1, 2)` years before matching. After matching, the difference in mean age of those that received a GOTV call and those that did not is `r round(diffavg2, 2)` years.\
+
+* The proportion of those receiving a GOTV call who voted in 1998 is `r round(new_prop1, 2)`.\
+* The sample proportion of those not receiving a GOTV call who voted in 1998 is `r round(new_prop2, 2)`.\
+* The large-sample 95% confidence interval for the difference in the proportions of those voting in 1998 for those who received a GOTV call verus those who did not is (`r round(new_lb, 2)`, `r round(new_ub, 2)`).
+
+## **Problem 2: Manufacturing flaws in circuit boards**
+
+### **Part A**
+
+```{r Part 2.A Plot 1, message = FALSE, warning = FALSE, echo = FALSE}
+ggplot(manufact, aes(x = Opening, y = skips)) +
+  geom_boxplot() +
+  labs(title = "Relationship between Opening Size and Number of Skips",
+       x = "Opening Size",
+       y = "Number of Skips")
+```
+
+The graph above illustrates that the bigger the opening size on the solder gun is, the lesser the average number of skips is.
+
+```{r Part 2.A Plot 2, message = FALSE, warning = FALSE, echo = FALSE}
+ggplot(manufact, aes(x = Solder, y = skips)) +
+  geom_boxplot() +
+  labs(title = "Relationship between Solder Thickness and Number of Skips",
+       x = "Solder Thickness",
+       y = "Number of Skips")
+```
+
+The graph above illustrates that the thicker the alloyed used for soldering is, the lesser the average number of skips is.
+
+```{r Part 2.B, message = FALSE, warning = FALSE, echo = FALSE}
+lm_opn_sldr = lm(skips ~ Opening + Solder + Opening:Solder, data = manufact)
+
+get_regression_table(lm_opn_sldr, conf.level = 0.95, digits = 2)
+```
+
+### **Part C**
+
+In the table above, I have fit the following equation for the average number of solder skips on the circuit board:\
+
+$\hat{y}$ = 0.39 + 2.41 $\cdot$ Opening: M + 5.13 $\cdot$ Opening: S + 2.28 $\cdot$ Solder: Thin + -0.74 $\cdot$ Opening: M $\cdot$ Solder: Thin + 9.65 $\cdot$ Opening: S $\cdot$ Solder: Thin\
+
+We can interpret the individual terms in this equation as follows:\
+
+* The baseline number of skips when the size of solder gun is large and the thickness of the alloy used for soldering is thick is 0.39.
+* The main effect for the **Opening: M** variable is 2.41 skips. This is the effect of **Opening: M** in isolation.
+* The main effect for the **Opening: S** variable is 5.13 skips. This is the effect of **Opening: S** in isolation.
+* The main effect for the **Solder: Thin** variable is 2.28 skips. This is the effect of **Solder: Thin** in isolation.
+* The interaction effect for **Opening: M** and **Solder: Thin** is -0.74 skips. In other words, when the size of solder gun is medium and the thickness of the alloy used for soldering is thin the number of skips is -0.74 more than what you would expect from summing the individual "isolated" effects of the two variables.
+* The interaction effect for **Opening: S** and **Solder: Thin** is 9.65 skips. In other words, when the size of solder gun is medium and the thickness of the alloy used for soldering is thin the number of skips is 9.65 more than what you would expect from summing the individual "isolated" effects of the two variables.
+
+### **Part D**
+
+Based on my analysis, I would recommend a combination of **Opening** size large and **Solder** size thick to AT&T. Individually, they both had the lowest mean number of skips. In terms of interaction, the estimate for **Opening: M:Solder: Thin** was lower, however, the range of its confidence interval is larger than that of the baseline. Ultimately, the promise of greater consistency, helped solidify my recommendation.
